@@ -53,15 +53,6 @@ class MainWindow:
         # Frame de entrada con borde y sombra
         self.frame_entrada = tk.Frame(self.frame_principal, bg="#ffffff", bd=1, relief="solid")
         
-        # Título del formulario
-        self.titulo_formulario = tk.Label(
-            self.frame_entrada,
-            text="Registro de Producto",
-            font=("Arial", 14, "bold"),
-            bg="#ffffff",
-            pady=10
-        )
-        
         # Campos de entrada
         self._crear_campos_entrada()
         
@@ -76,25 +67,40 @@ class MainWindow:
         # Frame para los campos
         frame_campos = tk.Frame(self.frame_entrada, bg="#ffffff", padx=20, pady=10)
         
+        # Configurar la expansión de las columnas de frame_campos
+        frame_campos.grid_columnconfigure(0, weight=0) # Columna para etiquetas (Nombre, Precio total, etc.)
+        frame_campos.grid_columnconfigure(1, weight=0) # Columna para campos de entrada (nombre_entry, precio_entry, etc.) y ahora el botón
+        frame_campos.grid_columnconfigure(2, weight=0) # Columna para el botón calcular y precio unitario
+
+        # Título del formulario (ahora creado aquí y usando grid)
+        self.titulo_formulario = tk.Label(
+            frame_campos, # Padre cambiado a frame_campos
+            text="Registro de Producto",
+            font=("Arial", 14, "bold"),
+            bg="#ffffff",
+            pady=10
+        )
+        self.titulo_formulario.grid(row=0, column=0, columnspan=3, pady=10, sticky="") # Eliminado anchor="center"
+        
         # Estilo común para las etiquetas
         label_style = {"font": ("Arial", 10), "bg": "#ffffff", "pady": 5}
         entry_style = {"font": ("Arial", 10), "width": 25}
         
-        # Nombre
-        tk.Label(frame_campos, text="Nombre del producto:", **label_style).grid(row=0, column=0, sticky="e", pady=5)
+        # Nombre (fila ajustada de 0 a 2)
+        tk.Label(frame_campos, text="Nombre del producto:", **label_style).grid(row=2, column=0, sticky="e", pady=5)
         self.nombre_entry = tk.Entry(frame_campos, **entry_style)
-        self.nombre_entry.grid(row=0, column=1, padx=10, pady=5)
+        self.nombre_entry.grid(row=2, column=1, padx=10, pady=5)
         
-        # Precio total
-        tk.Label(frame_campos, text="Precio total ($):", **label_style).grid(row=1, column=0, sticky="e", pady=5)
+        # Precio total (fila ajustada de 1 a 3)
+        tk.Label(frame_campos, text="Precio total ($):", **label_style).grid(row=3, column=0, sticky="e", pady=5)
         self.precio_entry = tk.Entry(frame_campos, **entry_style)
-        self.precio_entry.grid(row=1, column=1, padx=10, pady=5)
+        self.precio_entry.grid(row=3, column=1, padx=10, pady=5)
         self.precio_entry.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, self.precio_entry))
         
-        # Cantidad y botón calcular en la misma fila
-        tk.Label(frame_campos, text="Cantidad:", **label_style).grid(row=2, column=0, sticky="e", pady=5)
+        # Cantidad y botón calcular en la misma fila (fila ajustada de 2 a 4)
+        tk.Label(frame_campos, text="Cantidad:", **label_style).grid(row=4, column=0, sticky="e", pady=5)
         self.cantidad_entry = tk.Entry(frame_campos, **entry_style)
-        self.cantidad_entry.grid(row=2, column=1, padx=10, pady=5)
+        self.cantidad_entry.grid(row=4, column=1, padx=10, pady=5)
         
         self.boton_calcular = tk.Button(
             frame_campos,
@@ -108,9 +114,9 @@ class MainWindow:
             bd=0,
             cursor="hand2"
         )
-        self.boton_calcular.grid(row=2, column=2, padx=(10,0), pady=5)
+        self.boton_calcular.grid(row=4, column=2, padx=(10,0), pady=5)
         
-        # Label para precio unitario (debajo del botón calcular)
+        # Label para precio unitario (debajo del botón calcular) (fila ajustada de 3 a 5)
         self.label_precio_unitario = tk.Label(
             frame_campos,
             text="Precio unitario: -",
@@ -118,30 +124,29 @@ class MainWindow:
             bg="#ffffff",
             fg="#2196F3"
         )
-        self.label_precio_unitario.grid(row=3, column=2, pady=5)
+        self.label_precio_unitario.grid(row=5, column=2, pady=5)
         
-        # Precio de venta
-        tk.Label(frame_campos, text="Precio de venta ($):", **label_style).grid(row=4, column=0, sticky="e", pady=5)
+        # Precio de venta (fila ajustada de 4 a 6)
+        tk.Label(frame_campos, text="Precio de venta ($):", **label_style).grid(row=6, column=0, sticky="e", pady=5)
         self.precio_venta_entry = tk.Entry(frame_campos, **entry_style)
-        self.precio_venta_entry.grid(row=4, column=1, padx=10, pady=5)
+        self.precio_venta_entry.grid(row=6, column=1, padx=10, pady=5)
         self.precio_venta_entry.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, self.precio_venta_entry))
         
-        # Botón agregar (centrado)
+        # Botón agregar (ahora creado aquí y usando grid)
         self.boton_agregar = tk.Button(
-            frame_campos,
+            frame_campos, # Padre cambiado a frame_campos
             text="Agregar Producto",
             command=self.agregar_producto,
             bg="#4CAF50",
             fg="white",
             font=("Arial", 10),
-            width=20,
+            width=15, # Reducido el ancho del botón
             pady=5,
             bd=0,
             cursor="hand2"
         )
-        self.boton_agregar.grid(row=5, column=0, columnspan=3, pady=10)
+        self.boton_agregar.grid(row=7, column=1, columnspan=1, pady=10, sticky="") # Eliminado anchor="center"
         
-        frame_campos.pack(fill="both", expand=True)
         self.frame_campos = frame_campos
 
     def _crear_botones(self):
@@ -229,9 +234,12 @@ class MainWindow:
         # Frame principal
         self.frame_principal.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
-        # Frame de entrada
+        # Frame de entrada (ahora usando grid para frame_campos)
         self.frame_entrada.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
-        self.titulo_formulario.pack()
+        # Posicionar frame_campos dentro de frame_entrada usando grid
+        self.frame_campos.grid(row=0, column=0, sticky="nsew") # Asegurarse de que frame_campos se referencie correctamente
+        self.frame_entrada.grid_rowconfigure(0, weight=1)
+        self.frame_entrada.grid_columnconfigure(0, weight=1)
         
         # Frame de botones derecha
         self.frame_botones_derecha.pack(side=tk.RIGHT, fill=tk.Y)
