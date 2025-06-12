@@ -1,6 +1,7 @@
 import json
 import os
 from models.producto import Producto
+import datetime
 
 class ProductoController:
     def __init__(self):
@@ -33,23 +34,37 @@ class ProductoController:
         except Exception as e:
             print(f"Error al guardar productos: {e}")
 
-    def agregar_producto(self, producto):
+    def obtener_productos(self):
+        """Retorna la lista de todos los productos."""
+        return self.productos
+
+    def agregar_producto(self, nombre, precio_total, cantidad, precio_venta_usuario):
         """Agrega un nuevo producto."""
+        producto = Producto(nombre, precio_total, cantidad, precio_venta_usuario)
         self.productos.append(producto)
         self.guardar_productos()
+        return producto
 
-    def editar_producto(self, indice, producto):
-        """Edita un producto existente."""
-        if 0 <= indice < len(self.productos):
-            self.productos[indice] = producto
+    def obtener_producto(self, id_producto):
+        """Obtiene un producto por su ID."""
+        try:
+            return self.productos[id_producto]
+        except IndexError:
+            return None
+
+    def actualizar_producto(self, id_producto, nombre, precio_total, cantidad, precio_venta_usuario):
+        """Actualiza un producto existente."""
+        if 0 <= id_producto < len(self.productos):
+            producto = Producto(nombre, precio_total, cantidad, precio_venta_usuario)
+            self.productos[id_producto] = producto
             self.guardar_productos()
             return True
         return False
 
-    def eliminar_producto(self, indice):
+    def eliminar_producto(self, id_producto):
         """Elimina un producto."""
-        if 0 <= indice < len(self.productos):
-            self.productos.pop(indice)
+        if 0 <= id_producto < len(self.productos):
+            self.productos.pop(id_producto)
             self.guardar_productos()
             return True
         return False
@@ -58,9 +73,19 @@ class ProductoController:
         """Busca productos por nombre o fecha."""
         criterio = criterio.lower()
         return [
-            (i, p) for i, p in enumerate(self.productos)
+            p for p in self.productos
             if criterio in p.nombre.lower() or criterio == p.fecha
         ]
+
+    def calcular_total_inversion_dia(self):
+        """Calcula el total invertido en el día actual."""
+        fecha_actual = datetime.datetime.now().strftime("%Y-%m-%d")
+        return sum(p.precio_total for p in self.productos if p.fecha == fecha_actual)
+
+    def calcular_ganancia_total_dia(self):
+        """Calcula la ganancia total del día actual."""
+        fecha_actual = datetime.datetime.now().strftime("%Y-%m-%d")
+        return sum(p.ganancia_total for p in self.productos if p.fecha == fecha_actual)
 
     def obtener_total_inversion_dia(self, fecha):
         """Calcula el total invertido en un día específico."""
