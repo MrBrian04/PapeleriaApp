@@ -3,6 +3,8 @@ from tkinter import messagebox, simpledialog, ttk
 import datetime
 from utils.formatters import formatear_pesos, formatear_numero
 from utils.validators import ValidacionError
+import tkinter.filedialog as filedialog
+import openpyxl
 
 class MainWindow:
     def __init__(self, root, controller):
@@ -57,25 +59,23 @@ class MainWindow:
     def _crear_widgets(self):
         """
         Crea y organiza todos los widgets principales de la interfaz.
+        (Elimino el botón de tema claro/oscuro, solo tema claro)
         """
         # Frame principal
         self.frame_principal = tk.Frame(self.root, bg="#f0f2f5")
-        
         # Frame de entrada con borde y sombra
         self.frame_entrada = tk.Frame(self.frame_principal, bg="#ffffff", bd=1, relief="solid")
-        
         # Campos de entrada
         self._crear_campos_entrada()
-        
         # Botones
         self._crear_botones()
-        
         # Tabla de historial
         self._crear_tabla_historial()
 
     def _crear_campos_entrada(self):
         """
         Crea los campos de entrada para registrar un producto y gestiona la navegación con Enter.
+        Ahora incluye validaciones visuales: resalta campos con error y muestra mensajes claros.
         """
         frame_campos = tk.Frame(self.frame_entrada, bg="#ffffff", padx=20, pady=10)
         frame_campos.grid_columnconfigure(0, weight=0)
@@ -91,16 +91,25 @@ class MainWindow:
         self.titulo_formulario.grid(row=0, column=0, columnspan=3, pady=10, sticky="")
         label_style = {"font": ("Arial", 10), "bg": "#ffffff", "pady": 5}
         entry_style = {"font": ("Arial", 10), "width": 25}
+        # Nombre
         tk.Label(frame_campos, text="Nombre del producto:", **label_style).grid(row=2, column=0, sticky="e", pady=5)
         self.nombre_entry = tk.Entry(frame_campos, **entry_style)
         self.nombre_entry.grid(row=2, column=1, padx=10, pady=5)
-        tk.Label(frame_campos, text="Precio total ($):", **label_style).grid(row=3, column=0, sticky="e", pady=5)
+        self.nombre_error = tk.Label(frame_campos, text="", font=("Arial", 8), fg="#F44336", bg="#ffffff")
+        self.nombre_error.grid(row=3, column=1, sticky="w")
+        # Precio total
+        tk.Label(frame_campos, text="Precio total ($):", **label_style).grid(row=4, column=0, sticky="e", pady=5)
         self.precio_entry = tk.Entry(frame_campos, **entry_style)
-        self.precio_entry.grid(row=3, column=1, padx=10, pady=5)
+        self.precio_entry.grid(row=4, column=1, padx=10, pady=5)
         self.precio_entry.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, self.precio_entry))
-        tk.Label(frame_campos, text="Cantidad:", **label_style).grid(row=4, column=0, sticky="e", pady=5)
+        self.precio_error = tk.Label(frame_campos, text="", font=("Arial", 8), fg="#F44336", bg="#ffffff")
+        self.precio_error.grid(row=5, column=1, sticky="w")
+        # Cantidad
+        tk.Label(frame_campos, text="Cantidad:", **label_style).grid(row=6, column=0, sticky="e", pady=5)
         self.cantidad_entry = tk.Entry(frame_campos, **entry_style)
-        self.cantidad_entry.grid(row=4, column=1, padx=10, pady=5)
+        self.cantidad_entry.grid(row=6, column=1, padx=10, pady=5)
+        self.cantidad_error = tk.Label(frame_campos, text="", font=("Arial", 8), fg="#F44336", bg="#ffffff")
+        self.cantidad_error.grid(row=7, column=1, sticky="w")
         # Label para precio unitario al lado de cantidad
         self.label_precio_unitario = tk.Label(
             frame_campos,
@@ -109,7 +118,7 @@ class MainWindow:
             bg="#ffffff",
             fg="#2196F3"
         )
-        self.label_precio_unitario.grid(row=4, column=2, padx=(10,0), pady=5)
+        self.label_precio_unitario.grid(row=6, column=2, padx=(10,0), pady=5)
         # Evento para calcular precio unitario y pasar foco
         def calcular_precio_unitario_y_saltar(event=None):
             try:
@@ -126,11 +135,12 @@ class MainWindow:
                 self.label_precio_unitario.config(text="Precio unitario: -")
         self.cantidad_entry.bind('<Return>', calcular_precio_unitario_y_saltar)
         # Precio de venta
-        tk.Label(frame_campos, text="Precio de venta ($):", **label_style).grid(row=6, column=0, sticky="e", pady=5)
+        tk.Label(frame_campos, text="Precio de venta ($):", **label_style).grid(row=8, column=0, sticky="e", pady=5)
         self.precio_venta_entry = tk.Entry(frame_campos, **entry_style)
-        self.precio_venta_entry.grid(row=6, column=1, padx=10, pady=5)
+        self.precio_venta_entry.grid(row=8, column=1, padx=10, pady=5)
         self.precio_venta_entry.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, self.precio_venta_entry))
-        self.precio_venta_entry.bind('<Return>', lambda e: self.agregar_producto())
+        self.precio_venta_error = tk.Label(frame_campos, text="", font=("Arial", 8), fg="#F44336", bg="#ffffff")
+        self.precio_venta_error.grid(row=9, column=1, sticky="w")
         # Botón agregar
         self.boton_agregar = tk.Button(
             frame_campos,
@@ -142,9 +152,12 @@ class MainWindow:
             width=15,
             pady=5,
             bd=0,
-            cursor="hand2"
+            cursor="hand2",
+            relief="flat",
+            highlightthickness=0
         )
-        self.boton_agregar.grid(row=7, column=1, columnspan=1, pady=10, sticky="")
+        # Subo el botón más arriba y lo centro mejor
+        self.boton_agregar.grid(row=10, column=1, columnspan=1, pady=(10, 20), sticky="n")
         self.frame_campos = frame_campos
         self.nombre_entry.bind('<Return>', lambda e: self.precio_entry.focus_set())
         self.precio_entry.bind('<Return>', lambda e: self.cantidad_entry.focus_set())
@@ -154,10 +167,29 @@ class MainWindow:
     def _crear_botones(self):
         """
         Crea los botones de acción (buscar, editar, eliminar, totales) en la interfaz.
+        Ahora muestra los atajos de teclado al lado izquierdo de cada botón.
+        Ajusta el alto de los botones para que sean un poco más compactos y no se corte el último botón.
         """
+        self.atajos = {
+            'Buscar producto': 'Ctrl+B',
+            'Editar producto': 'Ctrl+E',
+            'Eliminar producto': 'Ctrl+D',
+            'Total Invertido del Día': 'Ctrl+I',
+            'Ganancia Total del Día': 'Ctrl+G',
+            'Agregar Producto': 'Ctrl+N',
+            'Exportar a Excel': 'Ctrl+X',
+        }
+        self.atajos_funciones = {
+            '<Control-b>': self.buscar_producto,
+            '<Control-e>': self.editar_producto,
+            '<Control-d>': self.eliminar_producto,
+            '<Control-i>': self.calcular_total_inversion_dia,
+            '<Control-g>': self.calcular_ganancia_total_dia,
+            '<Control-n>': lambda: self.nombre_entry.focus_set(),
+            '<Control-x>': self.exportar_excel,
+        }
         # Frame para botones de la derecha
         self.frame_botones_derecha = tk.Frame(self.frame_principal, bg="#f0f2f5", padx=10)
-        
         # Título de acciones
         tk.Label(
             self.frame_botones_derecha,
@@ -166,29 +198,47 @@ class MainWindow:
             bg="#f0f2f5",
             pady=10
         ).pack()
-        
-        # Botones de acción
+        # Botones de acción con atajos
         botones_derecha = [
             ("🔍 Buscar producto", self.buscar_producto, "#2196F3"),
             ("✏️ Editar producto", self.editar_producto, "#FF9800"),
             ("🗑️ Eliminar producto", self.eliminar_producto, "#F44336"),
             ("💰 Total Invertido del Día", self.calcular_total_inversion_dia, "#9C27B0"),
-            ("📈 Ganancia Total del Día", self.calcular_ganancia_total_dia, "#4CAF50")
+            ("📈 Ganancia Total del Día", self.calcular_ganancia_total_dia, "#4CAF50"),
+            ("➕ Agregar Producto", self.agregar_producto, "#4CAF50"),
+            ("📤 Exportar a Excel", self.exportar_excel, "#607d8b"),
         ]
-        
-        for texto, comando, color in botones_derecha:
-            tk.Button(
-                self.frame_botones_derecha,
+        frame_grid = tk.Frame(self.frame_botones_derecha, bg="#f0f2f5")
+        frame_grid.pack(fill=tk.Y, expand=False)
+        for i, (texto, comando, color) in enumerate(botones_derecha):
+            atajo = self.atajos.get(texto.replace('🔍 ','').replace('✏️ ','').replace('🗑️ ','').replace('💰 ','').replace('📈 ','').replace('➕ ','').replace('📤 ',''), "")
+            label_atajo = tk.Label(
+                frame_grid,
+                text=atajo,
+                font=("Arial", 9, "bold"),
+                bg="#f0f2f5",
+                fg="#888888",
+                width=13,
+                anchor="w"
+            )
+            label_atajo.grid(row=i, column=0, sticky="ew", padx=(0, 4), pady=3)
+            boton = tk.Button(
+                frame_grid,
                 text=texto,
                 command=comando,
                 bg=color,
                 fg="white",
                 font=("Arial", 10),
-                width=25,
-                pady=8,
+                width=22,  # ancho suficiente para todo el texto
+                pady=6,    # sutilmente más compacto
                 bd=0,
-                cursor="hand2"
-            ).pack(fill=tk.X, pady=5)
+                cursor="hand2",
+                anchor="center"
+            )
+            boton.grid(row=i, column=1, sticky="w", padx=(0, 0), pady=3)
+        frame_grid.grid_columnconfigure(1, weight=0)
+        for atajo, funcion in self.atajos_funciones.items():
+            self.root.bind(atajo, lambda e, f=funcion: f())
 
     def _crear_tabla_historial(self):
         """
@@ -269,30 +319,74 @@ class MainWindow:
         except ValueError:
             messagebox.showerror("Error", "Por favor, ingrese valores numéricos válidos")
 
+    def mostrar_errores_registro(self, errores):
+        """
+        Muestra los mensajes de error y resalta los campos con error en el registro de producto.
+        """
+        # Limpiar estilos previos
+        for entry, label in [
+            (self.nombre_entry, self.nombre_error),
+            (self.precio_entry, self.precio_error),
+            (self.cantidad_entry, self.cantidad_error),
+            (self.precio_venta_entry, self.precio_venta_error)
+        ]:
+            entry.config(highlightthickness=0)
+            label.config(text="")
+        # Mostrar errores
+        for campo, mensaje in errores.items():
+            entry = getattr(self, f"{campo}_entry")
+            label = getattr(self, f"{campo}_error")
+            entry.config(highlightbackground="#F44336", highlightcolor="#F44336", highlightthickness=2)
+            label.config(text=mensaje)
+
+    def limpiar_errores_registro(self):
+        """
+        Limpia los mensajes y estilos de error en el registro de producto.
+        """
+        for entry, label in [
+            (self.nombre_entry, self.nombre_error),
+            (self.precio_entry, self.precio_error),
+            (self.cantidad_entry, self.cantidad_error),
+            (self.precio_venta_entry, self.precio_venta_error)
+        ]:
+            entry.config(highlightthickness=0)
+            label.config(text="")
+
     def agregar_producto(self):
         """
         Agrega un nuevo producto al historial y actualiza la vista.
         Valida los datos y muestra errores si es necesario.
         """
+        self.limpiar_errores_registro()
+        errores = {}
+        nombre = self.nombre_entry.get().strip()
+        precio_total = self.precio_entry.get().replace(".", "")
+        cantidad = self.cantidad_entry.get().strip()
+        precio_venta = self.precio_venta_entry.get().replace(".", "")
+        if not nombre:
+            errores["nombre"] = "El nombre es obligatorio."
+        if not precio_total or not precio_total.isdigit() or float(precio_total) <= 0:
+            errores["precio"] = "Precio total inválido."
+        if not cantidad or not cantidad.isdigit() or int(cantidad) <= 0:
+            errores["cantidad"] = "Cantidad inválida."
+        if not precio_venta or not precio_venta.isdigit() or float(precio_venta) <= 0:
+            errores["precio_venta"] = "Precio de venta inválido."
+        if errores:
+            self.mostrar_errores_registro(errores)
+            return
         try:
-            # Obtener valores de los campos y eliminar puntos
-            nombre = self.nombre_entry.get()
-            precio_total = float(self.precio_entry.get().replace(".", ""))
-            cantidad = int(self.cantidad_entry.get())
-            precio_venta = float(self.precio_venta_entry.get().replace(".", ""))
-            
-            # Agregar el producto
-            self.controller.agregar_producto(nombre, precio_total, cantidad, precio_venta)
-            
-            # Limpiar campos y actualizar historial
+            self.controller.agregar_producto(
+                nombre,
+                float(precio_total),
+                int(cantidad),
+                float(precio_venta)
+            )
             self.limpiar_entradas()
             self.mostrar_historial()
         except ValidacionError as e:
-            messagebox.showerror("Error de validación", str(e))
-        except ValueError:
-            messagebox.showerror("Error", "Por favor, ingrese valores numéricos válidos")
+            self.mostrar_errores_registro({"nombre": str(e)})
         except Exception as e:
-            messagebox.showerror("Error", f"Error al agregar el producto: {str(e)}")
+            self.mostrar_errores_registro({"nombre": f"Error: {str(e)}"})
 
     def limpiar_entradas(self):
         """
@@ -842,6 +936,44 @@ class MainWindow:
         # Permitir cerrar con Enter
         ventana.bind('<Return>', lambda event: ventana.destroy())
         boton_cerrar.focus_set()
+
+    def exportar_excel(self):
+        """
+        Exporta el historial de productos a un archivo Excel (.xlsx), permitiendo elegir la ubicación.
+        """
+        productos = self.controller.obtener_productos()
+        if not productos:
+            messagebox.showinfo("Exportar a Excel", "No hay productos para exportar.")
+            return
+        archivo = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Archivos de Excel", "*.xlsx")],
+            title="Guardar historial como Excel"
+        )
+        if not archivo:
+            return
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Historial"
+        columnas = [
+            "ID", "Nombre", "Precio Total", "Cantidad", "Precio Unitario",
+            "Precio Venta", "Ganancia U.", "Ganancia Total", "Fecha"
+        ]
+        ws.append(columnas)
+        for idx, p in enumerate(productos):
+            ws.append([
+                idx + 1,
+                p.nombre,
+                p.precio_total,
+                p.cantidad,
+                p.precio_unitario,
+                p.precio_venta_usuario,
+                p.ganancia_unitaria,
+                p.ganancia_total,
+                p.fecha
+            ])
+        wb.save(archivo)
+        messagebox.showinfo("Exportar a Excel", f"Historial exportado exitosamente a:\n{archivo}")
 
     def _crear_ventana_emergente(self, titulo, geometria):
         """

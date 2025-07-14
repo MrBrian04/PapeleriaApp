@@ -1,9 +1,23 @@
 [
     {
-        "nombre": "xd",
+        "nombre": "pepe",
+        "precio_total": 9000.0,
+        "cantidad": 10,
+        "precio_venta_usuario": 1900.0,
+        "fecha": "2025-07-14"
+    },
+    {
+        "nombre": "pepepe",
         "precio_total": 8000.0,
-        "cantidad": 9,
+        "cantidad": 8,
         "precio_venta_usuario": 8000.0,
+        "fecha": "2025-07-14"
+    },
+    {
+        "nombre": "pepe",
+        "precio_total": 900000.0,
+        "cantidad": 99,
+        "precio_venta_usuario": 800000.0,
         "fecha": "2025-07-14"
     }
 ]
