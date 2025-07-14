@@ -6,6 +6,10 @@ from utils.validators import ValidacionError
 
 class MainWindow:
     def __init__(self, root, controller):
+        """
+        Inicializa la ventana principal de la aplicación.
+        Configura la interfaz, widgets y muestra el historial de productos.
+        """
         self.root = root
         self.controller = controller
         self.root.title("PapeleriaApp")
@@ -22,7 +26,10 @@ class MainWindow:
         self.mostrar_historial()
 
     def _formatear_entrada_precio(self, event, entry):
-        """Formatea el valor de entrada mientras se escribe."""
+        """
+        Formatea el valor de entrada mientras se escribe, agregando puntos cada 3 dígitos.
+        Útil para mostrar precios en formato colombiano.
+        """
         # Obtener el valor actual
         valor = entry.get().replace(".", "")
         # Formatear el número
@@ -32,7 +39,9 @@ class MainWindow:
         entry.insert(0, valor_formateado)
 
     def _configurar_estilos(self):
-        """Configura los estilos de la aplicación."""
+        """
+        Configura los estilos visuales de la aplicación (colores, fuentes, botones, etc).
+        """
         style = ttk.Style()
         style.configure("TButton", padding=6, relief="flat", background="#2196F3")
         style.configure("TLabel", background="#f0f2f5", font=("Arial", 10))
@@ -46,7 +55,9 @@ class MainWindow:
                        padding=5)
 
     def _crear_widgets(self):
-        """Crea todos los widgets de la interfaz."""
+        """
+        Crea y organiza todos los widgets principales de la interfaz.
+        """
         # Frame principal
         self.frame_principal = tk.Frame(self.root, bg="#f0f2f5")
         
@@ -63,7 +74,9 @@ class MainWindow:
         self._crear_tabla_historial()
 
     def _crear_campos_entrada(self):
-        """Crea los campos de entrada de datos."""
+        """
+        Crea los campos de entrada para registrar un producto y gestiona la navegación con Enter.
+        """
         frame_campos = tk.Frame(self.frame_entrada, bg="#ffffff", padx=20, pady=10)
         frame_campos.grid_columnconfigure(0, weight=0)
         frame_campos.grid_columnconfigure(1, weight=0)
@@ -139,7 +152,9 @@ class MainWindow:
         self.precio_venta_entry.bind('<Return>', lambda e: self.agregar_producto())
 
     def _crear_botones(self):
-        """Crea los botones de la interfaz."""
+        """
+        Crea los botones de acción (buscar, editar, eliminar, totales) en la interfaz.
+        """
         # Frame para botones de la derecha
         self.frame_botones_derecha = tk.Frame(self.frame_principal, bg="#f0f2f5", padx=10)
         
@@ -176,7 +191,9 @@ class MainWindow:
             ).pack(fill=tk.X, pady=5)
 
     def _crear_tabla_historial(self):
-        """Crea la tabla de historial."""
+        """
+        Crea la tabla donde se muestra el historial de productos registrados.
+        """
         # Frame para la tabla
         frame_tabla = tk.Frame(self.frame_principal, bg="#f0f2f5")
         
@@ -219,7 +236,9 @@ class MainWindow:
         frame_tabla.pack(fill=tk.BOTH, expand=True)
 
     def _configurar_layout(self):
-        """Configura el layout de la interfaz."""
+        """
+        Organiza el layout general de la ventana principal.
+        """
         # Frame principal
         self.frame_principal.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
@@ -234,7 +253,9 @@ class MainWindow:
         self.frame_botones_derecha.pack(side=tk.RIGHT, fill=tk.Y)
 
     def calcular_precio_unitario(self):
-        """Calcula el precio unitario basado en el precio total y la cantidad."""
+        """
+        Calcula y muestra el precio unitario basado en el precio total y la cantidad ingresada.
+        """
         try:
             precio_total = float(self.precio_entry.get().replace(".", ""))
             cantidad = int(self.cantidad_entry.get())
@@ -249,7 +270,10 @@ class MainWindow:
             messagebox.showerror("Error", "Por favor, ingrese valores numéricos válidos")
 
     def agregar_producto(self):
-        """Agrega un nuevo producto."""
+        """
+        Agrega un nuevo producto al historial y actualiza la vista.
+        Valida los datos y muestra errores si es necesario.
+        """
         try:
             # Obtener valores de los campos y eliminar puntos
             nombre = self.nombre_entry.get()
@@ -271,7 +295,9 @@ class MainWindow:
             messagebox.showerror("Error", f"Error al agregar el producto: {str(e)}")
 
     def limpiar_entradas(self):
-        """Limpia todos los campos de entrada."""
+        """
+        Limpia todos los campos de entrada del formulario de registro.
+        """
         self.nombre_entry.delete(0, tk.END)
         self.precio_entry.delete(0, tk.END)
         self.cantidad_entry.delete(0, tk.END)
@@ -279,7 +305,9 @@ class MainWindow:
         self.label_precio_unitario.config(text="Precio unitario: -")
 
     def mostrar_historial(self):
-        """Muestra el historial de productos en la tabla."""
+        """
+        Muestra el historial de productos en la tabla principal.
+        """
         # Limpiar tabla
         for item in self.historial.get_children():
             self.historial.delete(item)
@@ -300,7 +328,10 @@ class MainWindow:
             ))
 
     def buscar_producto(self):
-        """Abre una ventana para buscar productos."""
+        """
+        Abre una ventana para buscar productos por ID, nombre o fecha.
+        Permite buscar y resaltar productos en el historial.
+        """
         ventana = self._crear_ventana_emergente("Buscar Producto", "500x350")
         def on_closing():
             for item in self.historial.get_children():
@@ -459,7 +490,9 @@ class MainWindow:
         entry_busqueda.focus_set()
 
     def resaltar_producto_en_historial(self, id_producto):
-        """Resalta un producto en el historial con color amarillo."""
+        """
+        Resalta un producto en la tabla de historial según su ID.
+        """
         # Primero, quitar el resaltado de todos los items
         for item in self.historial.get_children():
             self.historial.item(item, tags=())
@@ -471,7 +504,10 @@ class MainWindow:
             self.historial.see(item)  # Hacer scroll hasta el item resaltado
 
     def editar_producto(self):
-        """Abre una ventana para editar un producto."""
+        """
+        Abre una ventana para ingresar el ID del producto a editar.
+        Navegación y confirmación con Enter.
+        """
         # --- NUEVA VENTANA PERSONALIZADA PARA INGRESAR ID ---
         ventana_id = self._crear_ventana_emergente("Editar Producto", "400x200")
         frame_id = tk.Frame(ventana_id, bg="#ffffff", padx=20, pady=20)
@@ -535,7 +571,9 @@ class MainWindow:
         entry_id.focus_set()
 
     def _ventana_editar_producto(self, id_producto, producto):
-        """Ventana de edición de producto con navegación por Enter y guardar solo en el botón."""
+        """
+        Ventana de edición de producto. Permite navegar entre campos con Enter y guardar solo cuando el foco está en el botón Guardar.
+        """
         ventana = self._crear_ventana_emergente("Editar Producto", "400x350")
         frame_formulario = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
         frame_formulario.pack(fill=tk.BOTH, expand=True)
@@ -594,7 +632,10 @@ class MainWindow:
         entry_nombre.focus_set()
 
     def eliminar_producto(self):
-        """Abre una ventana para eliminar un producto."""
+        """
+        Abre una ventana para ingresar el ID del producto a eliminar.
+        Navegación y confirmación con Enter.
+        """
         # --- NUEVA VENTANA PERSONALIZADA PARA INGRESAR ID ---
         ventana_id = self._crear_ventana_emergente("Eliminar Producto", "400x200")
         frame_id = tk.Frame(ventana_id, bg="#ffffff", padx=20, pady=20)
@@ -658,7 +699,9 @@ class MainWindow:
         entry_id.focus_set()
 
     def _confirmar_eliminacion(self, id_producto, producto):
-        """Ventana de confirmación de eliminación, igual que antes."""
+        """
+        Ventana de confirmación para eliminar un producto. Permite confirmar con Enter.
+        """
         ventana = self._crear_ventana_emergente("Confirmar Eliminación", "400x200")
         frame_confirmacion = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
         frame_confirmacion.pack(fill=tk.BOTH, expand=True)
@@ -707,7 +750,10 @@ class MainWindow:
         ventana.focus_set()
 
     def calcular_total_inversion_dia(self):
-        """Calcula el total invertido en el día actual."""
+        """
+        Muestra una ventana informativa con el total invertido en el día actual.
+        Se puede cerrar con Enter.
+        """
         total = self.controller.calcular_total_inversion_dia()
         ventana = self._crear_ventana_emergente("Total Invertido", "400x300")
         frame_principal = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
@@ -751,7 +797,10 @@ class MainWindow:
         boton_cerrar.focus_set()
 
     def calcular_ganancia_total_dia(self):
-        """Calcula la ganancia total del día actual."""
+        """
+        Muestra una ventana informativa con la ganancia total del día actual.
+        Se puede cerrar con Enter.
+        """
         ganancia = self.controller.calcular_ganancia_total_dia()
         ventana = self._crear_ventana_emergente("Ganancia Total", "400x300")
         frame_principal = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
@@ -795,7 +844,9 @@ class MainWindow:
         boton_cerrar.focus_set()
 
     def _crear_ventana_emergente(self, titulo, geometria):
-        """Crea una ventana emergente con el título y geometría especificados."""
+        """
+        Crea una ventana emergente personalizada con el título y tamaño especificados.
+        """
         ventana = tk.Toplevel(self.root)
         ventana.title(titulo)
         ventana.geometry(geometria)
