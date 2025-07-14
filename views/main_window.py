@@ -64,59 +64,31 @@ class MainWindow:
 
     def _crear_campos_entrada(self):
         """Crea los campos de entrada de datos."""
-        # Frame para los campos
         frame_campos = tk.Frame(self.frame_entrada, bg="#ffffff", padx=20, pady=10)
-        
-        # Configurar la expansión de las columnas de frame_campos
-        frame_campos.grid_columnconfigure(0, weight=0) # Columna para etiquetas (Nombre, Precio total, etc.)
-        frame_campos.grid_columnconfigure(1, weight=0) # Columna para campos de entrada (nombre_entry, precio_entry, etc.) y ahora el botón
-        frame_campos.grid_columnconfigure(2, weight=0) # Columna para el botón calcular y precio unitario
-
-        # Título del formulario (ahora creado aquí y usando grid)
+        frame_campos.grid_columnconfigure(0, weight=0)
+        frame_campos.grid_columnconfigure(1, weight=0)
+        frame_campos.grid_columnconfigure(2, weight=0)
         self.titulo_formulario = tk.Label(
-            frame_campos, # Padre cambiado a frame_campos
+            frame_campos,
             text="Registro de Producto",
             font=("Arial", 14, "bold"),
             bg="#ffffff",
             pady=10
         )
-        self.titulo_formulario.grid(row=0, column=0, columnspan=3, pady=10, sticky="") # Eliminado anchor="center"
-        
-        # Estilo común para las etiquetas
+        self.titulo_formulario.grid(row=0, column=0, columnspan=3, pady=10, sticky="")
         label_style = {"font": ("Arial", 10), "bg": "#ffffff", "pady": 5}
         entry_style = {"font": ("Arial", 10), "width": 25}
-        
-        # Nombre (fila ajustada de 0 a 2)
         tk.Label(frame_campos, text="Nombre del producto:", **label_style).grid(row=2, column=0, sticky="e", pady=5)
         self.nombre_entry = tk.Entry(frame_campos, **entry_style)
         self.nombre_entry.grid(row=2, column=1, padx=10, pady=5)
-        
-        # Precio total (fila ajustada de 1 a 3)
         tk.Label(frame_campos, text="Precio total ($):", **label_style).grid(row=3, column=0, sticky="e", pady=5)
         self.precio_entry = tk.Entry(frame_campos, **entry_style)
         self.precio_entry.grid(row=3, column=1, padx=10, pady=5)
         self.precio_entry.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, self.precio_entry))
-        
-        # Cantidad y botón calcular en la misma fila (fila ajustada de 2 a 4)
         tk.Label(frame_campos, text="Cantidad:", **label_style).grid(row=4, column=0, sticky="e", pady=5)
         self.cantidad_entry = tk.Entry(frame_campos, **entry_style)
         self.cantidad_entry.grid(row=4, column=1, padx=10, pady=5)
-        
-        self.boton_calcular = tk.Button(
-            frame_campos,
-            text="Calcular Precio Unitario",
-            command=self.calcular_precio_unitario,
-            bg="#2196F3",
-            fg="white",
-            font=("Arial", 10),
-            width=20,
-            pady=5,
-            bd=0,
-            cursor="hand2"
-        )
-        self.boton_calcular.grid(row=4, column=2, padx=(10,0), pady=5)
-        
-        # Label para precio unitario (debajo del botón calcular) (fila ajustada de 3 a 5)
+        # Label para precio unitario al lado de cantidad
         self.label_precio_unitario = tk.Label(
             frame_campos,
             text="Precio unitario: -",
@@ -124,30 +96,47 @@ class MainWindow:
             bg="#ffffff",
             fg="#2196F3"
         )
-        self.label_precio_unitario.grid(row=5, column=2, pady=5)
-        
-        # Precio de venta (fila ajustada de 4 a 6)
+        self.label_precio_unitario.grid(row=4, column=2, padx=(10,0), pady=5)
+        # Evento para calcular precio unitario y pasar foco
+        def calcular_precio_unitario_y_saltar(event=None):
+            try:
+                precio_total = float(self.precio_entry.get().replace(".", ""))
+                cantidad = int(self.cantidad_entry.get())
+                if cantidad <= 0:
+                    self.label_precio_unitario.config(text="Cantidad > 0")
+                    return
+                precio_unitario = precio_total / cantidad
+                from utils.formatters import formatear_pesos
+                self.label_precio_unitario.config(text=f"Precio unitario: {formatear_pesos(precio_unitario)}")
+                self.precio_venta_entry.focus_set()
+            except ValueError:
+                self.label_precio_unitario.config(text="Precio unitario: -")
+        self.cantidad_entry.bind('<Return>', calcular_precio_unitario_y_saltar)
+        # Precio de venta
         tk.Label(frame_campos, text="Precio de venta ($):", **label_style).grid(row=6, column=0, sticky="e", pady=5)
         self.precio_venta_entry = tk.Entry(frame_campos, **entry_style)
         self.precio_venta_entry.grid(row=6, column=1, padx=10, pady=5)
         self.precio_venta_entry.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, self.precio_venta_entry))
-        
-        # Botón agregar (ahora creado aquí y usando grid)
+        self.precio_venta_entry.bind('<Return>', lambda e: self.agregar_producto())
+        # Botón agregar
         self.boton_agregar = tk.Button(
-            frame_campos, # Padre cambiado a frame_campos
+            frame_campos,
             text="Agregar Producto",
             command=self.agregar_producto,
             bg="#4CAF50",
             fg="white",
             font=("Arial", 10),
-            width=15, # Reducido el ancho del botón
+            width=15,
             pady=5,
             bd=0,
             cursor="hand2"
         )
-        self.boton_agregar.grid(row=7, column=1, columnspan=1, pady=10, sticky="") # Eliminado anchor="center"
-        
+        self.boton_agregar.grid(row=7, column=1, columnspan=1, pady=10, sticky="")
         self.frame_campos = frame_campos
+        self.nombre_entry.bind('<Return>', lambda e: self.precio_entry.focus_set())
+        self.precio_entry.bind('<Return>', lambda e: self.cantidad_entry.focus_set())
+        self.cantidad_entry.bind('<Return>', calcular_precio_unitario_y_saltar)
+        self.precio_venta_entry.bind('<Return>', lambda e: self.agregar_producto())
 
     def _crear_botones(self):
         """Crea los botones de la interfaz."""
@@ -312,28 +301,17 @@ class MainWindow:
 
     def buscar_producto(self):
         """Abre una ventana para buscar productos."""
-        ventana = self._crear_ventana_emergente("Buscar Producto", "500x350") # Aumentar un poco la altura para más espacio
-
-        # Función para quitar el resaltado al cerrar la ventana (definida al principio)
+        ventana = self._crear_ventana_emergente("Buscar Producto", "500x350")
         def on_closing():
-            # Quitar el resaltado de todos los items
             for item in self.historial.get_children():
                 self.historial.item(item, tags=())
             ventana.destroy()
-
-        # Configurar el evento de cierre de ventana
         ventana.protocol("WM_DELETE_WINDOW", on_closing)
-        
-        # Frame principal que contendrá todo
         frame_principal = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
         frame_principal.pack(fill=tk.BOTH, expand=True)
-        
-        # Empaquetar el frame de botones primero (para asegurar que siempre esté en la parte inferior)
         frame_botones_inferior = tk.Frame(frame_principal, bg="#ffffff")
         frame_botones_inferior.pack(fill=tk.X, side=tk.BOTTOM, pady=10)
-        
-        # Botón buscar
-        tk.Button(
+        boton_buscar = tk.Button(
             frame_botones_inferior,
             text="Buscar",
             command=lambda: realizar_busqueda(), 
@@ -344,9 +322,8 @@ class MainWindow:
             pady=5,
             bd=0,
             cursor="hand2"
-        ).pack(side=tk.LEFT, padx=5)
-        
-        # Botón cerrar
+        )
+        boton_buscar.pack(side=tk.LEFT, padx=5)
         tk.Button(
             frame_botones_inferior,
             text="Cerrar",
@@ -359,19 +336,11 @@ class MainWindow:
             bd=0,
             cursor="hand2"
         ).pack(side=tk.RIGHT, padx=5)
-
-        # Empaquetar el frame de búsqueda en la parte superior (después de los botones para que no se empujen)
         frame_busqueda = tk.Frame(frame_principal, bg="#ffffff")
         frame_busqueda.pack(fill=tk.X, side=tk.TOP, pady=(0, 10))
-        
-        # Frame para opciones de búsqueda
         frame_opciones = tk.Frame(frame_busqueda, bg="#ffffff")
         frame_opciones.pack(fill=tk.X, pady=(0, 10))
-        
-        # Variable para el tipo de búsqueda
         tipo_busqueda = tk.StringVar(value="id")
-        
-        # Radio buttons para tipo de búsqueda
         tk.Radiobutton(
             frame_opciones,
             text="Buscar por ID",
@@ -379,7 +348,6 @@ class MainWindow:
             value="id",
             bg="#ffffff"
         ).pack(side=tk.LEFT, padx=10)
-        
         tk.Radiobutton(
             frame_opciones,
             text="Buscar por nombre",
@@ -387,7 +355,6 @@ class MainWindow:
             value="nombre",
             bg="#ffffff"
         ).pack(side=tk.LEFT, padx=10)
-        
         tk.Radiobutton(
             frame_opciones,
             text="Buscar por fecha",
@@ -395,52 +362,38 @@ class MainWindow:
             value="fecha",
             bg="#ffffff"
         ).pack(side=tk.LEFT, padx=10)
-        
-        # Campo de búsqueda
         tk.Label(
             frame_busqueda,
             text="Ingrese el término de búsqueda:",
             font=("Arial", 10),
             bg="#ffffff"
         ).pack(pady=(0, 10))
-        
         entry_busqueda = tk.Entry(frame_busqueda, font=("Arial", 10), width=30)
         entry_busqueda.pack(pady=(0, 20))
-        
-        # Empaquetar el frame de resultados (este se expandirá para llenar el espacio restante en el medio)
         frame_resultados = tk.Frame(frame_principal, bg="#ffffff")
         frame_resultados.pack(fill=tk.BOTH, expand=True)
-
-        def realizar_busqueda():
-            # Limpiar resultados anteriores
+        def realizar_busqueda(event=None):
             for widget in frame_resultados.winfo_children():
                 widget.destroy()
-            
-            # Realizar búsqueda según el tipo seleccionado
             termino = entry_busqueda.get()
             tipo = tipo_busqueda.get()
-            
             if tipo == "id":
                 try:
-                    id_busqueda = int(termino) - 1  # Ajustar ID para búsqueda interna
+                    id_busqueda = int(termino) - 1
                     productos = [self.controller.obtener_producto(id_busqueda)] if self.controller.obtener_producto(id_busqueda) else []
-                    # Resaltar el producto en el historial
                     self.resaltar_producto_en_historial(id_busqueda)
                 except ValueError:
                     productos = []
             elif tipo == "fecha":
                 productos = self.controller.buscar_productos_por_fecha(termino)
-                # Resaltar productos encontrados en el historial
                 for idx, p in enumerate(self.controller.obtener_productos()):
                     if p.fecha == termino:
                         self.resaltar_producto_en_historial(idx)
-            else:  # búsqueda por nombre
+            else:
                 productos = self.controller.buscar_productos(termino)
-                # Resaltar productos encontrados en el historial
                 for idx, p in enumerate(self.controller.obtener_productos()):
                     if termino.lower() in p.nombre.lower():
                         self.resaltar_producto_en_historial(idx)
-            
             if not productos:
                 tk.Label(
                     frame_resultados,
@@ -450,148 +403,167 @@ class MainWindow:
                     fg="#666666"
                 ).pack()
                 return
-            
-            # Mostrar resultados
             for idx, producto in enumerate(productos):
                 frame_producto = tk.Frame(frame_resultados, bg="#ffffff", pady=5)
                 frame_producto.pack(fill=tk.X)
-                
                 tk.Label(
                     frame_producto,
-                    text=f"ID: {idx + 1}",  # ID comienza en 1
+                    text=f"ID: {idx + 1}",
                     font=("Arial", 10, "bold"),
                     bg="#ffffff"
                 ).pack(anchor="w")
-                
                 tk.Label(
                     frame_producto,
                     text=f"Nombre: {producto.nombre}",
                     font=("Arial", 10, "bold"),
                     bg="#ffffff"
                 ).pack(anchor="w")
-                
                 tk.Label(
                     frame_producto,
                     text=f"Precio total: {formatear_pesos(producto.precio_total)}",
                     font=("Arial", 10),
                     bg="#ffffff"
                 ).pack(anchor="w")
-                
                 tk.Label(
                     frame_producto,
                     text=f"Cantidad: {producto.cantidad}",
                     font=("Arial", 10),
                     bg="#ffffff"
                 ).pack(anchor="w")
-                
                 tk.Label(
                     frame_producto,
                     text=f"Precio unitario: {formatear_pesos(producto.precio_unitario)}",
                     font=("Arial", 10),
                     bg="#ffffff"
                 ).pack(anchor="w")
-                
                 tk.Label(
                     frame_producto,
                     text=f"Precio venta: {formatear_pesos(producto.precio_venta_usuario)}",
                     font=("Arial", 10),
                     bg="#ffffff"
                 ).pack(anchor="w")
-                
                 tk.Label(
                     frame_producto,
                     text=f"Ganancia unitaria: {formatear_pesos(producto.ganancia_unitaria)}",
                     font=("Arial", 10),
                     bg="#ffffff"
                 ).pack(anchor="w")
-                
                 tk.Label(
                     frame_producto,
                     text=f"Ganancia total: {formatear_pesos(producto.ganancia_total)}",
                     font=("Arial", 10),
                     bg="#ffffff"
                 ).pack(anchor="w")
-                
-                tk.Label(
-                    frame_producto,
-                    text=f"Fecha: {producto.fecha}",
-                    font=("Arial", 10),
-                    bg="#ffffff"
-                ).pack(anchor="w")
-                
-                # Separador
-                ttk.Separator(frame_resultados, orient="horizontal").pack(fill=tk.X, pady=5)
+        entry_busqueda.bind('<Return>', realizar_busqueda)
+        ventana.bind('<Return>', realizar_busqueda)
+        entry_busqueda.focus_set()
 
     def resaltar_producto_en_historial(self, id_producto):
         """Resalta un producto en el historial con color amarillo."""
         # Primero, quitar el resaltado de todos los items
         for item in self.historial.get_children():
             self.historial.item(item, tags=())
-        
-        # Luego, resaltar el producto encontrado
-        if id_producto is not None:
-            item = self.historial.get_children()[id_producto]
+        # Luego, resaltar el producto encontrado solo si está en rango
+        items = self.historial.get_children()
+        if id_producto is not None and 0 <= id_producto < len(items):
+            item = items[id_producto]
             self.historial.item(item, tags=('resaltado',))
             self.historial.see(item)  # Hacer scroll hasta el item resaltado
 
     def editar_producto(self):
         """Abre una ventana para editar un producto."""
-        # Obtener el ID del producto a editar
-        id_producto = simpledialog.askinteger("Editar Producto", "Ingrese el ID del producto a editar:")
-        if id_producto is None:
-            return
-        
-        # Ajustar ID para búsqueda interna
-        id_producto = id_producto - 1
-        
-        # Obtener el producto
-        producto = self.controller.obtener_producto(id_producto)
-        if not producto:
-            messagebox.showerror("Error", "Producto no encontrado")
-            return
-        
-        # Crear ventana de edición
-        ventana = self._crear_ventana_emergente("Editar Producto", "400x300")
-        
-        # Frame para el formulario
+        # --- NUEVA VENTANA PERSONALIZADA PARA INGRESAR ID ---
+        ventana_id = self._crear_ventana_emergente("Editar Producto", "400x200")
+        frame_id = tk.Frame(ventana_id, bg="#ffffff", padx=20, pady=20)
+        frame_id.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(
+            frame_id,
+            text="Ingrese el ID del producto a editar:",
+            font=("Arial", 12, "bold"),
+            bg="#ffffff",
+            fg="#FF9800"
+        ).pack(pady=(0, 10))
+
+        entry_id = tk.Entry(frame_id, font=("Arial", 12), width=10, justify="center")
+        entry_id.pack(pady=(0, 20))
+        entry_id.focus_set()
+
+        label_error = tk.Label(frame_id, text="", font=("Arial", 10), fg="#F44336", bg="#ffffff")
+        label_error.pack()
+
+        def continuar(event=None):
+            valor = entry_id.get()
+            if not valor.isdigit() or int(valor) <= 0:
+                label_error.config(text="Ingrese un ID válido (número mayor a 0)")
+                return
+            id_producto = int(valor) - 1
+            producto = self.controller.obtener_producto(id_producto)
+            if not producto:
+                label_error.config(text="Producto no encontrado")
+                return
+            ventana_id.destroy()
+            self._ventana_editar_producto(id_producto, producto)
+
+        frame_botones = tk.Frame(frame_id, bg="#ffffff")
+        frame_botones.pack(pady=10)
+        tk.Button(
+            frame_botones,
+            text="Cancelar",
+            command=ventana_id.destroy,
+            bg="#9E9E9E",
+            fg="white",
+            font=("Arial", 10),
+            width=15,
+            pady=5,
+            bd=0,
+            cursor="hand2"
+        ).pack(side=tk.LEFT, padx=5)
+        tk.Button(
+            frame_botones,
+            text="Continuar",
+            command=continuar,
+            bg="#FF9800",
+            fg="white",
+            font=("Arial", 10),
+            width=15,
+            pady=5,
+            bd=0,
+            cursor="hand2"
+        ).pack(side=tk.RIGHT, padx=5)
+        ventana_id.bind('<Return>', continuar)
+        entry_id.focus_set()
+
+    def _ventana_editar_producto(self, id_producto, producto):
+        """Ventana de edición de producto con navegación por Enter y guardar solo en el botón."""
+        ventana = self._crear_ventana_emergente("Editar Producto", "400x350")
         frame_formulario = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
         frame_formulario.pack(fill=tk.BOTH, expand=True)
-        
-        # Campos de edición
         tk.Label(frame_formulario, text="Nombre:", bg="#ffffff").pack(anchor="w")
         entry_nombre = tk.Entry(frame_formulario, width=30)
         entry_nombre.insert(0, producto.nombre)
         entry_nombre.pack(pady=(0, 10))
-        
         tk.Label(frame_formulario, text="Precio total:", bg="#ffffff").pack(anchor="w")
         entry_precio = tk.Entry(frame_formulario, width=30)
         entry_precio.insert(0, formatear_numero(str(int(producto.precio_total))))
         entry_precio.pack(pady=(0, 10))
         entry_precio.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, entry_precio))
-        
         tk.Label(frame_formulario, text="Cantidad:", bg="#ffffff").pack(anchor="w")
         entry_cantidad = tk.Entry(frame_formulario, width=30)
         entry_cantidad.insert(0, str(producto.cantidad))
         entry_cantidad.pack(pady=(0, 10))
-        
         tk.Label(frame_formulario, text="Precio de venta:", bg="#ffffff").pack(anchor="w")
         entry_precio_venta = tk.Entry(frame_formulario, width=30)
         entry_precio_venta.insert(0, formatear_numero(str(int(producto.precio_venta_usuario))))
         entry_precio_venta.pack(pady=(0, 10))
         entry_precio_venta.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, entry_precio_venta))
-        
-        def guardar():
+        def guardar(event=None):
             try:
-                # Obtener valores
                 nombre = entry_nombre.get()
                 precio_total = float(entry_precio.get().replace(".", ""))
                 cantidad = int(entry_cantidad.get())
                 precio_venta = float(entry_precio_venta.get().replace(".", ""))
-                
-                # Actualizar producto
                 self.controller.actualizar_producto(id_producto, nombre, precio_total, cantidad, precio_venta)
-                
-                # Cerrar ventana y actualizar historial
                 ventana.destroy()
                 self.mostrar_historial()
             except ValidacionError as e:
@@ -600,9 +572,7 @@ class MainWindow:
                 messagebox.showerror("Error", "Por favor, ingrese valores numéricos válidos")
             except Exception as e:
                 messagebox.showerror("Error", f"Error al actualizar el producto: {str(e)}")
-        
-        # Botón guardar
-        tk.Button(
+        boton_guardar = tk.Button(
             frame_formulario,
             text="Guardar",
             command=guardar,
@@ -613,32 +583,85 @@ class MainWindow:
             pady=5,
             bd=0,
             cursor="hand2"
-        ).pack(pady=10)
+        )
+        boton_guardar.pack(pady=10)
+        # Navegación por Enter
+        entry_nombre.bind('<Return>', lambda e: entry_precio.focus_set())
+        entry_precio.bind('<Return>', lambda e: entry_cantidad.focus_set())
+        entry_cantidad.bind('<Return>', lambda e: entry_precio_venta.focus_set())
+        entry_precio_venta.bind('<Return>', lambda e: boton_guardar.focus_set())
+        boton_guardar.bind('<Return>', guardar)
+        entry_nombre.focus_set()
 
     def eliminar_producto(self):
         """Abre una ventana para eliminar un producto."""
-        # Obtener el ID del producto a eliminar
-        id_producto = simpledialog.askinteger("Eliminar Producto", "Ingrese el ID del producto a eliminar:")
-        if id_producto is None:
-            return
-        
-        # Ajustar ID para búsqueda interna
-        id_producto = id_producto - 1
-        
-        # Obtener el producto
-        producto = self.controller.obtener_producto(id_producto)
-        if not producto:
-            messagebox.showerror("Error", "Producto no encontrado")
-            return
-        
-        # Crear ventana de confirmación
+        # --- NUEVA VENTANA PERSONALIZADA PARA INGRESAR ID ---
+        ventana_id = self._crear_ventana_emergente("Eliminar Producto", "400x200")
+        frame_id = tk.Frame(ventana_id, bg="#ffffff", padx=20, pady=20)
+        frame_id.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(
+            frame_id,
+            text="Ingrese el ID del producto a eliminar:",
+            font=("Arial", 12, "bold"),
+            bg="#ffffff",
+            fg="#F44336"
+        ).pack(pady=(0, 10))
+
+        entry_id = tk.Entry(frame_id, font=("Arial", 12), width=10, justify="center")
+        entry_id.pack(pady=(0, 20))
+        entry_id.focus_set()
+
+        label_error = tk.Label(frame_id, text="", font=("Arial", 10), fg="#F44336", bg="#ffffff")
+        label_error.pack()
+
+        def continuar(event=None):
+            valor = entry_id.get()
+            if not valor.isdigit() or int(valor) <= 0:
+                label_error.config(text="Ingrese un ID válido (número mayor a 0)")
+                return
+            id_producto = int(valor) - 1
+            producto = self.controller.obtener_producto(id_producto)
+            if not producto:
+                label_error.config(text="Producto no encontrado")
+                return
+            ventana_id.destroy()
+            self._confirmar_eliminacion(id_producto, producto)
+
+        frame_botones = tk.Frame(frame_id, bg="#ffffff")
+        frame_botones.pack(pady=10)
+        tk.Button(
+            frame_botones,
+            text="Cancelar",
+            command=ventana_id.destroy,
+            bg="#9E9E9E",
+            fg="white",
+            font=("Arial", 10),
+            width=15,
+            pady=5,
+            bd=0,
+            cursor="hand2"
+        ).pack(side=tk.LEFT, padx=5)
+        tk.Button(
+            frame_botones,
+            text="Continuar",
+            command=continuar,
+            bg="#F44336",
+            fg="white",
+            font=("Arial", 10),
+            width=15,
+            pady=5,
+            bd=0,
+            cursor="hand2"
+        ).pack(side=tk.RIGHT, padx=5)
+        ventana_id.bind('<Return>', continuar)
+        entry_id.focus_set()
+
+    def _confirmar_eliminacion(self, id_producto, producto):
+        """Ventana de confirmación de eliminación, igual que antes."""
         ventana = self._crear_ventana_emergente("Confirmar Eliminación", "400x200")
-        
-        # Frame para la confirmación
         frame_confirmacion = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
         frame_confirmacion.pack(fill=tk.BOTH, expand=True)
-        
-        # Mensaje de confirmación
         tk.Label(
             frame_confirmacion,
             text=f"¿Está seguro de eliminar el producto '{producto.nombre}'?",
@@ -646,22 +669,15 @@ class MainWindow:
             bg="#ffffff",
             wraplength=350
         ).pack(pady=(0, 20))
-        
-        def confirmar_eliminacion():
+        def confirmar_eliminacion(event=None):
             try:
-                # Eliminar producto
                 self.controller.eliminar_producto(id_producto)
-                
-                # Cerrar ventana y actualizar historial
                 ventana.destroy()
                 self.mostrar_historial()
             except Exception as e:
                 messagebox.showerror("Error", f"Error al eliminar el producto: {str(e)}")
-        
-        # Botones de confirmación
         frame_botones = tk.Frame(frame_confirmacion, bg="#ffffff")
         frame_botones.pack(fill=tk.X, pady=10)
-        
         tk.Button(
             frame_botones,
             text="Cancelar",
@@ -674,8 +690,7 @@ class MainWindow:
             bd=0,
             cursor="hand2"
         ).pack(side=tk.LEFT, padx=5)
-        
-        tk.Button(
+        boton_eliminar = tk.Button(
             frame_botones,
             text="Eliminar",
             command=confirmar_eliminacion,
@@ -686,20 +701,17 @@ class MainWindow:
             pady=5,
             bd=0,
             cursor="hand2"
-        ).pack(side=tk.RIGHT, padx=5)
+        )
+        boton_eliminar.pack(side=tk.RIGHT, padx=5)
+        ventana.bind('<Return>', confirmar_eliminacion)
+        ventana.focus_set()
 
     def calcular_total_inversion_dia(self):
         """Calcula el total invertido en el día actual."""
         total = self.controller.calcular_total_inversion_dia()
-        
-        # Crear ventana emergente decorada
         ventana = self._crear_ventana_emergente("Total Invertido", "400x300")
-        
-        # Frame principal con fondo degradado
         frame_principal = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
         frame_principal.pack(fill=tk.BOTH, expand=True)
-        
-        # Título decorado
         tk.Label(
             frame_principal,
             text="💰 Total Invertido del Día",
@@ -707,8 +719,6 @@ class MainWindow:
             bg="#ffffff",
             fg="#2196F3"
         ).pack(pady=(0, 20))
-        
-        # Valor con estilo
         tk.Label(
             frame_principal,
             text=formatear_pesos(total),
@@ -716,8 +726,6 @@ class MainWindow:
             bg="#ffffff",
             fg="#4CAF50"
         ).pack(pady=20)
-        
-        # Mensaje informativo
         tk.Label(
             frame_principal,
             text="Este es el total de inversión realizada hoy",
@@ -725,9 +733,7 @@ class MainWindow:
             bg="#ffffff",
             fg="#666666"
         ).pack(pady=10)
-        
-        # Botón cerrar
-        tk.Button(
+        boton_cerrar = tk.Button(
             frame_principal,
             text="Cerrar",
             command=ventana.destroy,
@@ -738,20 +744,18 @@ class MainWindow:
             pady=5,
             bd=0,
             cursor="hand2"
-        ).pack(pady=20)
+        )
+        boton_cerrar.pack(pady=20)
+        # Permitir cerrar con Enter
+        ventana.bind('<Return>', lambda event: ventana.destroy())
+        boton_cerrar.focus_set()
 
     def calcular_ganancia_total_dia(self):
         """Calcula la ganancia total del día actual."""
         ganancia = self.controller.calcular_ganancia_total_dia()
-        
-        # Crear ventana emergente decorada
         ventana = self._crear_ventana_emergente("Ganancia Total", "400x300")
-        
-        # Frame principal con fondo degradado
         frame_principal = tk.Frame(ventana, bg="#ffffff", padx=20, pady=20)
         frame_principal.pack(fill=tk.BOTH, expand=True)
-        
-        # Título decorado
         tk.Label(
             frame_principal,
             text="📈 Ganancia Total del Día",
@@ -759,8 +763,6 @@ class MainWindow:
             bg="#ffffff",
             fg="#4CAF50"
         ).pack(pady=(0, 20))
-        
-        # Valor con estilo
         tk.Label(
             frame_principal,
             text=formatear_pesos(ganancia),
@@ -768,8 +770,6 @@ class MainWindow:
             bg="#ffffff",
             fg="#4CAF50"
         ).pack(pady=20)
-        
-        # Mensaje informativo
         tk.Label(
             frame_principal,
             text="Este es el total de ganancia obtenida hoy",
@@ -777,9 +777,7 @@ class MainWindow:
             bg="#ffffff",
             fg="#666666"
         ).pack(pady=10)
-        
-        # Botón cerrar
-        tk.Button(
+        boton_cerrar = tk.Button(
             frame_principal,
             text="Cerrar",
             command=ventana.destroy,
@@ -790,7 +788,11 @@ class MainWindow:
             pady=5,
             bd=0,
             cursor="hand2"
-        ).pack(pady=20)
+        )
+        boton_cerrar.pack(pady=20)
+        # Permitir cerrar con Enter
+        ventana.bind('<Return>', lambda event: ventana.destroy())
+        boton_cerrar.focus_set()
 
     def _crear_ventana_emergente(self, titulo, geometria):
         """Crea una ventana emergente con el título y geometría especificados."""

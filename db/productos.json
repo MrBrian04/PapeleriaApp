@@ -1,1 +1,9 @@
-[]
+[
+    {
+        "nombre": "xd",
+        "precio_total": 8000.0,
+        "cantidad": 9,
+        "precio_venta_usuario": 8000.0,
+        "fecha": "2025-07-14"
+    }
+]
