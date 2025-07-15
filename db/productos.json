@@ -19,5 +19,12 @@
         "cantidad": 99,
         "precio_venta_usuario": 800000.0,
         "fecha": "2025-07-14"
+    },
+    {
+        "nombre": "BEBE",
+        "precio_total": 90000.0,
+        "cantidad": 80,
+        "precio_venta_usuario": 8000.0,
+        "fecha": "2025-07-14"
     }
 ]

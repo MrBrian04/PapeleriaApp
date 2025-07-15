@@ -91,23 +91,24 @@ class MainWindow:
         self.titulo_formulario.grid(row=0, column=0, columnspan=3, pady=10, sticky="")
         label_style = {"font": ("Arial", 10), "bg": "#ffffff", "pady": 5}
         entry_style = {"font": ("Arial", 10), "width": 25}
+        # Labels e inputs
         # Nombre
-        tk.Label(frame_campos, text="Nombre del producto:", **label_style).grid(row=2, column=0, sticky="e", pady=5)
+        tk.Label(frame_campos, text="Nombre del producto:", **label_style).grid(row=2, column=0, sticky="e", pady=1)
         self.nombre_entry = tk.Entry(frame_campos, **entry_style)
-        self.nombre_entry.grid(row=2, column=1, padx=10, pady=5)
+        self.nombre_entry.grid(row=2, column=1, padx=10, pady=1)
         self.nombre_error = tk.Label(frame_campos, text="", font=("Arial", 8), fg="#F44336", bg="#ffffff")
         self.nombre_error.grid(row=3, column=1, sticky="w")
         # Precio total
-        tk.Label(frame_campos, text="Precio total ($):", **label_style).grid(row=4, column=0, sticky="e", pady=5)
+        tk.Label(frame_campos, text="Precio total ($):", **label_style).grid(row=4, column=0, sticky="e", pady=1)
         self.precio_entry = tk.Entry(frame_campos, **entry_style)
-        self.precio_entry.grid(row=4, column=1, padx=10, pady=5)
+        self.precio_entry.grid(row=4, column=1, padx=10, pady=1)
         self.precio_entry.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, self.precio_entry))
         self.precio_error = tk.Label(frame_campos, text="", font=("Arial", 8), fg="#F44336", bg="#ffffff")
         self.precio_error.grid(row=5, column=1, sticky="w")
         # Cantidad
-        tk.Label(frame_campos, text="Cantidad:", **label_style).grid(row=6, column=0, sticky="e", pady=5)
+        tk.Label(frame_campos, text="Cantidad:", **label_style).grid(row=6, column=0, sticky="e", pady=1)
         self.cantidad_entry = tk.Entry(frame_campos, **entry_style)
-        self.cantidad_entry.grid(row=6, column=1, padx=10, pady=5)
+        self.cantidad_entry.grid(row=6, column=1, padx=10, pady=1)
         self.cantidad_error = tk.Label(frame_campos, text="", font=("Arial", 8), fg="#F44336", bg="#ffffff")
         self.cantidad_error.grid(row=7, column=1, sticky="w")
         # Label para precio unitario al lado de cantidad
@@ -118,7 +119,7 @@ class MainWindow:
             bg="#ffffff",
             fg="#2196F3"
         )
-        self.label_precio_unitario.grid(row=6, column=2, padx=(10,0), pady=5)
+        self.label_precio_unitario.grid(row=6, column=2, padx=(10,0), pady=1)
         # Evento para calcular precio unitario y pasar foco
         def calcular_precio_unitario_y_saltar(event=None):
             try:
@@ -135,9 +136,9 @@ class MainWindow:
                 self.label_precio_unitario.config(text="Precio unitario: -")
         self.cantidad_entry.bind('<Return>', calcular_precio_unitario_y_saltar)
         # Precio de venta
-        tk.Label(frame_campos, text="Precio de venta ($):", **label_style).grid(row=8, column=0, sticky="e", pady=5)
+        tk.Label(frame_campos, text="Precio de venta ($):", **label_style).grid(row=8, column=0, sticky="e", pady=1)
         self.precio_venta_entry = tk.Entry(frame_campos, **entry_style)
-        self.precio_venta_entry.grid(row=8, column=1, padx=10, pady=5)
+        self.precio_venta_entry.grid(row=8, column=1, padx=10, pady=1)
         self.precio_venta_entry.bind('<KeyRelease>', lambda e: self._formatear_entrada_precio(e, self.precio_venta_entry))
         self.precio_venta_error = tk.Label(frame_campos, text="", font=("Arial", 8), fg="#F44336", bg="#ffffff")
         self.precio_venta_error.grid(row=9, column=1, sticky="w")
@@ -156,8 +157,9 @@ class MainWindow:
             relief="flat",
             highlightthickness=0
         )
-        # Subo el botón más arriba y lo centro mejor
-        self.boton_agregar.grid(row=10, column=1, columnspan=1, pady=(10, 20), sticky="n")
+        # Eliminar cualquier grid_columnconfigure(1, weight=1) agregado para el botón
+        # Restaurar el grid del botón a su forma original
+        self.boton_agregar.grid(row=10, column=1, columnspan=1, pady=(3, 0), sticky="n")
         self.frame_campos = frame_campos
         self.nombre_entry.bind('<Return>', lambda e: self.precio_entry.focus_set())
         self.precio_entry.bind('<Return>', lambda e: self.cantidad_entry.focus_set())
@@ -628,10 +630,10 @@ class MainWindow:
                 label_error.config(text="Ingrese un ID válido (número mayor a 0)")
                 return
             id_producto = int(valor) - 1
-            producto = self.controller.obtener_producto(id_producto)
-            if not producto:
+        producto = self.controller.obtener_producto(id_producto)
+        if not producto:
                 label_error.config(text="Producto no encontrado")
-                return
+            return
             ventana_id.destroy()
             self._ventana_editar_producto(id_producto, producto)
 
@@ -756,10 +758,10 @@ class MainWindow:
                 label_error.config(text="Ingrese un ID válido (número mayor a 0)")
                 return
             id_producto = int(valor) - 1
-            producto = self.controller.obtener_producto(id_producto)
-            if not producto:
+        producto = self.controller.obtener_producto(id_producto)
+        if not producto:
                 label_error.config(text="Producto no encontrado")
-                return
+            return
             ventana_id.destroy()
             self._confirmar_eliminacion(id_producto, producto)
 
