@@ -630,10 +630,10 @@ class MainWindow:
                 label_error.config(text="Ingrese un ID válido (número mayor a 0)")
                 return
             id_producto = int(valor) - 1
-        producto = self.controller.obtener_producto(id_producto)
-        if not producto:
+            producto = self.controller.obtener_producto(id_producto)
+            if not producto:
                 label_error.config(text="Producto no encontrado")
-            return
+                return
             ventana_id.destroy()
             self._ventana_editar_producto(id_producto, producto)
 
@@ -758,10 +758,10 @@ class MainWindow:
                 label_error.config(text="Ingrese un ID válido (número mayor a 0)")
                 return
             id_producto = int(valor) - 1
-        producto = self.controller.obtener_producto(id_producto)
-        if not producto:
+            producto = self.controller.obtener_producto(id_producto)
+            if not producto:
                 label_error.config(text="Producto no encontrado")
-            return
+                return
             ventana_id.destroy()
             self._confirmar_eliminacion(id_producto, producto)
 
