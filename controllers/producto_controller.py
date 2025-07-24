@@ -94,3 +94,7 @@ class ProductoController:
     def obtener_ganancia_total_dia(self, fecha):
         """Calcula la ganancia total de un día específico."""
         return sum(p.ganancia_total for p in self.productos if p.fecha == fecha) 
+
+    def contar_tipos_productos(self):
+        """Devuelve la cantidad de tipos únicos de productos registrados (por nombre)."""
+        return len(set(p.nombre for p in self.productos)) 
